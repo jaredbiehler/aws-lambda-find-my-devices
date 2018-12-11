@@ -16,7 +16,6 @@ node_modules
 
 config/local.js
 config/local.json
-config/custom-environment-variables.json
 
 findMyPhone/
 findMyWatch/
