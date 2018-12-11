@@ -1,17 +1,25 @@
 #!/usr/bin/env bash
 
-if [ "$#" -ne 1 ]; then
-  echo "Usage : ./build.sh lambdaName";
+if [ "$#" -lt 1 ]; then
+  echo "Usage : ./build.sh lambdaName [profile]";
   exit 1;
 fi
 
-lambda=${1%/}; // # Removes trailing slashes
-echo "Deploying $lambda";
+lambda=${1%/}; # Removes trailing slashes
+profile=${2:-default};
+echo "Deploying $lambda for AWS profile $profile";
+
+# cleanup old build
+rm -rf $lambda
+
+# create workspace
+mkdir $lambda
+
 cd $lambda;
 if [ $? -eq 0 ]; then
   echo "...."
 else
-  echo "Couldn't cd to directory $lambda. You may have mis-spelled the lambda/directory name";
+  echo "Couldn't cd to directory $lambda. You may have misspelled the lambda/directory name";
   exit 1
 fi
 
@@ -24,6 +32,7 @@ else
   exit 1
 fi
 
+cp ../find-my-device-base.js index.js
 cp ../package.json .
 
 echo "npm installing...";
@@ -46,12 +55,9 @@ rm archive.zip;
 echo "creating a new zip file"
 zip archive.zip * -qq -r -x .git/\* \*.sh tests/\* node_modules/aws-sdk/\* \*.zip
 
-rm -r config
-rm -r node_modules
-
 echo "Uploading $lambda to AWS...";
 
-aws lambda update-function-code --profile jaredbcoding --function-name $lambda --zip-file fileb://archive.zip --publish
+aws lambda update-function-code --profile $profile --function-name $lambda --zip-file fileb://archive.zip --publish
 
 if [ $? -eq 0 ]; then
   echo "!! Upload successful !!"
@@ -61,3 +67,7 @@ else
   echo "Lambda name = $lambda"
   exit 1;
 fi
+
+# delete workspace
+cd ..
+rm -rf $lambda

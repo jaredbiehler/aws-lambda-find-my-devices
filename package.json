@@ -2,9 +2,10 @@
   "name": "aws-lambda-find-my-devices",
   "version": "1.0.0",
   "description": "AWS Lambda script to find Apple devices via iCloud",
-  "main": "index.js",
+  "main": "find-my-device-base.js",
   "dependencies": {
-    "aws-sdk": "^2.373.0",
+    "ask-sdk-core": "^2.3.0",
+    "ask-sdk-model": "^1.9.0",
     "config": "^3.0.0",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5"
@@ -13,9 +14,10 @@
     "lambda-local": "^1.5.2"
   },
   "scripts": {
-    "test:phone": "lambda-local -l findMyPhone/index.js -h handler -e tests/event.json",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build:phone": "./build.sh findMyPhone"
+    "test:phone": "DEVICE=phone lambda-local -l find-my-device-base.js -h handler -e tests/event.json",
+    "test:watch": "DEVICE=watch lambda-local -l find-my-device-base.js -h handler -e tests/event.json",
+    "build:phone": "./build.sh findMyPhone",
+    "build:watch": "./build.sh findMyWatch"
   },
   "repository": {
     "type": "git",

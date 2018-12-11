@@ -1,10 +1,16 @@
+process.env.NODE_CONFIG_DIR = process.env["LAMBDA_TASK_ROOT"]+'/config';
+
 const request = require('request-promise-native');
 const config = require('config');
+const Alexa = require('ask-sdk-core');
+
+// 'phone' or 'watch', set in environment variable
+const deviceType = config.get('device');
 
 const host = 'https://fmipmobile.icloud.com';
 const user = {
     "name": config.get('user'),
-    "stuff": Buffer.from(`${config.get('stuff')}`, 'base64').toString('ascii')
+    "stuff": Buffer.from(`${config.get('password')}`, 'base64').toString('ascii')
 };
 
 const paths = {
@@ -80,12 +86,38 @@ async function playSound(device, message) {
     console.log(`Result: ${result}`);
 }
 
-exports.handler = async (event, context, callback) => {
-    switch (event.request.type) {
-        case "LaunchRequest":
-            await playSound('phone', 'Amazon Echo is looking for you!');
-            context.succeed(generateResponse(buildSpeechletResponse('I have played a sound on your phone', false)));
-            break;
+const LaunchRequestHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
+    },
+    async handle(handlerInput) {
+        await playSound(deviceType, 'Amazon Echo is looking for you!');
+
+        const speechText = `I have played a sound on your ${deviceType}`;
+
+        return handlerInput.responseBuilder
+            .speak(speechText)
+            .reprompt(speechText)
+            .withSimpleCard(`Find ${deviceType} Triggered`, speechText)
+            .getResponse();
     }
-    callback();
 };
+
+const ErrorHandler = {
+    canHandle() {
+        return true;
+    },
+    handle(handlerInput, error) {
+        console.log(`Error handled: ${error.message}`);
+
+        return handlerInput.responseBuilder
+            .speak('Sorry, I can\'t understand the command. Please say again.')
+            .reprompt('Sorry, I can\'t understand the command. Please say again.')
+            .getResponse();
+    },
+};
+
+exports.handler = Alexa.SkillBuilders.custom()
+    .addRequestHandlers(LaunchRequestHandler)
+    .addErrorHandlers(ErrorHandler)
+    .lambda();
