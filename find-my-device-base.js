@@ -9,8 +9,8 @@ const deviceType = config.get('device');
 
 const host = 'https://fmipmobile.icloud.com';
 const user = {
-    "name": config.get('user'),
-    "stuff": Buffer.from(`${config.get('password')}`, 'base64').toString('ascii')
+    name: config.get('user'),
+    password: Buffer.from(`${config.get('password')}`, 'base64').toString('ascii')
 };
 
 const paths = {
@@ -21,7 +21,7 @@ const paths = {
 const options = {
     method: 'POST',
     headers: {
-        "Authorization": `Basic  ${Buffer.from(user.name + ":" + user.stuff).toString('base64')}`
+        "Authorization": `Basic  ${Buffer.from(user.name + ":" + user.password).toString('base64')}`
     },
     rejectUnauthorized: false
 };
