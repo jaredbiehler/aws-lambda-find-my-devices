@@ -7,7 +7,7 @@ Two Alexa skills means that will there will need to be two lambdas. These must b
 
 ### Assumptions
 
-This project assumes the two lambdas are named `findMyPhone` and `findMyWatch`. The build scripts in `package.json` will need to be updated if these names change. 
+This project assumes the two lambdas are named `findMyPhone` and `findMyWatch` - more device types can be added, but each will need its own Lambda. The build scripts in `package.json` will need to be updated if these names change. 
 
 This project also assumes that `aws-cli` has already been installed and configured.
 
@@ -18,13 +18,15 @@ An iCloud username and password are needed to trigger the messages via the iClou
 The `node-config` library is used for configuration. When developing locally, consider adding a `local.json` file to the `config` directory. Two values are needed:
 ```json
 {
-  "user": "iCloud username",
-  "password": "base-64 encoded iCloud password"
+  "iCloud": {
+    "user": "iCloud username",
+    "password": "base-64 encoded iCloud password"
+  }
 }
 ```
-The file `local.json` has already be excluded from from Git. As always, take care not to commit / push user credentials to GitHub.
+The file `local.json` has already be excluded (via .gitignore) from from Git. As always, take care not to commit / push user credentials to GitHub.
 
-The same username and password will need to be added to the environment variables of the Lambda under the same names as the JSON above. As well, a third value will need to be added `"device": "phone|watch"`. 
+The same username and password will need to be added to the environment variables of the Lambda under the same names as the JSON above. As well, a third value will need to be added `"icloud_model_display_name": "iPhone|Apple Watch"`. 
 ### Test
 
 The `local-lambda` library provides a wonderful testing environment to test the lambda logic locally.

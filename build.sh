@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-if [ "$#" -lt 1 ]; then
-  echo "Usage : ./build.sh lambdaName [profile]";
+if [ "$#" -lt 2 ]; then
+  echo "Usage : ./build.sh lambdaName [AWS profile]";
   exit 1;
 fi
 
 lambda=${1%/}; # Removes trailing slashes
 profile=${2:-default};
-echo "Deploying $lambda for AWS profile $profile";
+echo "Deploying $lambda on AWS profile $profile";
 
 # cleanup old build
 rm -rf $lambda
@@ -47,7 +47,7 @@ fi
 rm package.json
 rm package-lock.json
 mkdir config
-cp ../config/default.js config/
+cp ../config/custom-environment-variables.json config/
 
 echo "removing old zip"
 rm archive.zip;

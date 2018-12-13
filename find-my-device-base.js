@@ -1,45 +1,71 @@
-process.env.NODE_CONFIG_DIR = process.env["LAMBDA_TASK_ROOT"]+'/config';
+// needed for node-config within Lambda
+process.env.NODE_CONFIG_DIR = `${process.env["LAMBDA_TASK_ROOT"]}/config`;
 
 const request = require('request-promise-native');
 const config = require('config');
 const Alexa = require('ask-sdk-core');
 
-// 'phone' or 'watch', set in environment variable
-const deviceType = config.get('device');
+/**
+ * iCloud API description of the device, e.g. 'Apple Watch' or 'iPhone'.
+ * This value may collide if the account has multiple devices of the same
+ * type - consider using a separate API field in that case.
+ *
+ * @type {string}
+ */
+const modelDisplayName = `${config.get('iCloud.modelDisplayName')}`;
 
-const host = 'https://fmipmobile.icloud.com';
-const user = {
-    name: config.get('user'),
-    password: Buffer.from(`${config.get('password')}`, 'base64').toString('ascii')
-};
-
-const paths = {
-    'initClient': '/fmipservice/device/PH/initClient',
-    'playSound': '/fmipservice/device/PH/playSound'
-};
-
-const options = {
-    method: 'POST',
-    headers: {
-        "Authorization": `Basic  ${Buffer.from(user.name + ":" + user.password).toString('base64')}`
+const iCloud = {
+    host: 'https://fmipmobile.icloud.com',
+    paths: {
+        initClient: '/fmipservice/device/PH/initClient',
+        playSound: '/fmipservice/device/PH/playSound'
     },
-    rejectUnauthorized: false
+    user: {
+        name: `${config.get('iCloud.user')}`,
+        password: Buffer.from(`${config.get('iCloud.password')}`, 'base64').toString('ascii')
+    }
 };
 
 /**
- * @return {Promise<Object>}
+ * iCloud POST request options helper method.
+ *
+ * @param {string} path
+ * @param {Object} [body]
+ * @return {Object}
  */
-async function initDevices() {
-    console.log('Starting init devices...');
+function getRequestOptions(path, body = null) {
+    const auth = Buffer.from(`${iCloud.user.name}:${iCloud.user.password}`).toString('base64');
+    const options = {
+        method: 'POST',
+        uri: `${iCloud.host}${path}`,
+        headers: {
+            Authorization: `Basic ${auth}`
+        },
+        rejectUnauthorized: false
+    };
 
-    const devices = {};
+    if (body) {
+        options.json = true;
+        options.body = body;
+        options.headers['Content-Type'] = 'application/json';
+    }
 
-    const initResult = await request(Object.assign({
-            uri: `${host}${paths.initClient.replace(/PH/, user.name)}`
-        }, options)
+    return options;
+}
+
+/**
+ * Requests all device info and attempts to find the specific device ID based on the
+ * modelDisplayName.
+ *
+ * @return {Promise<string>}
+ */
+async function fetchDeviceId() {
+    console.log('Starting fetch for device ID via initDevices');
+
+    const initResult = await request(
+        getRequestOptions(iCloud.paths.initClient.replace(/PH/, iCloud.user.name))
     );
 
-    //console.log("Data:", data);
     const data = JSON.parse(initResult);
 
     if (!data.content || !Array.isArray(data.content)) {
@@ -47,41 +73,38 @@ async function initDevices() {
         throw new Error('Invalid data from iCloud initClient');
     }
 
-    for (let i = 0; i < data.content.length; i++) {
-        if (data.content[i].modelDisplayName === 'Apple Watch') {
-            devices.watchId = data.content[i].id;
-        }
-        if (data.content[i].modelDisplayName === 'iPhone') {
-            devices.iPhoneId = data.content[i].id;
-        }
+    const content = data.content.find(c => c && c.modelDisplayName === modelDisplayName);
+
+    if (!content) {
+        throw new Error(`Unable to determine ID for ${modelDisplayName}`);
     }
 
-    console.log('iPhone ID: ', devices.iPhoneId, ', watch ID: ', devices.watchId);
-
-    return devices;
+    return content.id;
 }
 
 /**
- * @param {string} device
+ * Launching point.
+ *
  * @param {string} message
  * @return {Promise<void>}
  */
-async function playSound(device, message) {
-    console.log('Starting play sound for ' + device + ' with message ' + message + '...');
+async function playSound(message) {
+    console.log(`Starting play sound for ${modelDisplayName} with message ${message}`);
 
-    const devices = await initDevices();
+    const deviceId = await fetchDeviceId();
 
-    const deviceId = device === 'phone' ? devices.iPhoneId : devices.watchId;
+    if (!deviceId) {
+        throw new Error(`Unable to determine ID for ${modelDisplayName}`);
+    }
 
-    const psOptions = Object.assign({
-        uri: `${host}${paths.playSound.replace(/PH/, user.name)}`,
-        json: true,
-        body: { device: deviceId, subject: message }
-    }, options);
+    console.log(`Playing sound on ${modelDisplayName}, ID: ${deviceId}`);
 
-    console.log('Playing sound on ' + device + ', ID: ' + deviceId + '...');
-
-    const result = await request(psOptions);
+    const result = await request(
+        getRequestOptions(
+            iCloud.paths.playSound.replace(/PH/, iCloud.user.name),
+            { device: deviceId, subject: message }
+        )
+    );
 
     console.log(`Result: ${result}`);
 }
@@ -91,15 +114,17 @@ const LaunchRequestHandler = {
         return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
     },
     async handle(handlerInput) {
-        await playSound(deviceType, 'Amazon Echo is looking for you!');
-
-        const speechText = `I have played a sound on your ${deviceType}`;
+        let speechText = `I have played a sound on your ${modelDisplayName}.`;
+        try {
+            await playSound('Alexa is looking for you!');
+        } catch (error) {
+            speechText = `Sorry, an error occurred while looking for your ${modelDisplayName}.`;
+            console.error(error);
+        }
 
         return handlerInput.responseBuilder
             .speak(speechText)
-            .reprompt(speechText)
-            .withSimpleCard(`Find ${deviceType} Triggered`, speechText)
-            .getResponse();
+            .withSimpleCard(`Find ${modelDisplayName} Triggered`, speechText);
     }
 };
 
@@ -108,11 +133,13 @@ const ErrorHandler = {
         return true;
     },
     handle(handlerInput, error) {
-        console.log(`Error handled: ${error.message}`);
+        console.error(`Error handled: ${error.message}`);
+
+        const speechText = `Sorry, I can't understand the command. Please say again.`;
 
         return handlerInput.responseBuilder
-            .speak('Sorry, I can\'t understand the command. Please say again.')
-            .reprompt('Sorry, I can\'t understand the command. Please say again.')
+            .speak(speechText)
+            .reprompt(speechText)
             .getResponse();
     },
 };

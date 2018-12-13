@@ -1,3 +1,7 @@
 {
-  "device": "DEVICE"
+  "iCloud": {
+    "user": "ICLOUD_USER",
+    "password": "ICLOUD_PASSWORD",
+    "modelDisplayName": "ICLOUD_MODEL_DISPLAY_NAME"
+  }
 }
