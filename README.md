@@ -26,6 +26,8 @@ The `node-config` library is used for configuration. When developing locally, co
 ```
 The file `local.json` has already be excluded (via .gitignore) from from Git. As always, take care not to commit / push user credentials to GitHub.
 
+&#x1F534; *IMPORTANT* &#x1F534;
+
 The same username and password will need to be added to the environment variables of the Lambda under the same names as the JSON above. As well, a third value will need to be added `"icloud_model_display_name": "iPhone|Apple Watch"`. 
 ### Test
 
