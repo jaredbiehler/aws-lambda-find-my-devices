@@ -7,7 +7,7 @@ Two Alexa skills means that will there will need to be two lambdas. These must b
 
 ### Assumptions
 
-This project assumes the two lambdas are named `findMyPhone` and `findMyWatch` - more device types can be added, but each will need its own Lambda. The build scripts in `package.json` will need to be updated if these names change. 
+This project assumes the two lambdas are named `findMyPhone` and `findMyWatch` - more device types can be added or removed, but each will need its own Lambda. The build scripts in `package.json` will need to be updated if these names change. 
 
 This project also assumes that `aws-cli` has already been installed and configured.
 
@@ -29,6 +29,9 @@ The file `local.json` has already be excluded (via .gitignore) from from Git. As
 &#x1F534; *IMPORTANT* &#x1F534;
 
 The same username and password will need to be added to the environment variables of the Lambda under the same names as the JSON above. As well, a third value will need to be added `"icloud_model_display_name": "iPhone|Apple Watch"`. 
+
+To find the `modelDisplayName` value for your devices, POST to https://fmipmobile.icloud.com/fmipservice/device/{user}/initClient with Authorization: Basic [base64 username:password] (if using Postman, make sure SSL certificate verification is turned off). Search for `modelDisplayName` in the result to find all devices associated to the account. Most likely they will just be simple like `iPhone`, `iPad` or `Apple Watch`. 
+
 ### Test
 
 The `local-lambda` library provides a wonderful testing environment to test the lambda logic locally.
