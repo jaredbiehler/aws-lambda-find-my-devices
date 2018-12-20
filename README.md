@@ -28,7 +28,7 @@ The file `local.json` has already be excluded (via .gitignore) from from Git. As
 
 &#x1F534; *IMPORTANT* &#x1F534;
 
-The same username and password will need to be added to the environment variables of the Lambda under the same names as the JSON above. As well, a third value will need to be added `"icloud_model_display_name": "iPhone|Apple Watch"`. 
+The same username and password will need to be added to the environment variables of the Lambda under the same names as the JSON above (`ICLOUD_USER` & `ICLOUD_PASSWORD`). As well, a third value will need to be added `"ICLOUD_MODEL_DISPLAY_NAME": "iPhone|Apple Watch"`. 
 
 To find the `modelDisplayName` value for your devices, POST to https://fmipmobile.icloud.com/fmipservice/device/{user}/initClient with Authorization: Basic [base64 username:password] (if using Postman, make sure SSL certificate verification is turned off). Search for `modelDisplayName` in the result to find all devices associated to the account. Most likely they will just be simple like `iPhone`, `iPad` or `Apple Watch`. 
 
