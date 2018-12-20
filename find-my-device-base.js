@@ -9,6 +9,10 @@ const Alexa = require('ask-sdk-core');
  * iCloud API description of the device, e.g. 'Apple Watch' or 'iPhone'.
  * This value may collide if the account has multiple devices of the same
  * type - consider using a separate API field in that case.
+ * 
+ * To find this value, POST to https://fmipmobile.icloud.com/fmipservice/device/{user}/initClient
+ * with Authorization: Basic [base64 username:password] (if using Postman, make sure SSL certificate
+ * verification is turned off). Search for 'modelDisplayName' to find all devices named on the account. 
  *
  * @type {string}
  */
