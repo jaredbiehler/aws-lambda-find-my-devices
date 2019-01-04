@@ -128,7 +128,9 @@ const LaunchRequestHandler = {
 
         return handlerInput.responseBuilder
             .speak(speechText)
-            .withSimpleCard(`Find ${modelDisplayName} Triggered`, speechText);
+            .withSimpleCard(`Find ${modelDisplayName} Triggered`, speechText)
+            .withShouldEndSession(true)
+            .getResponse();
     }
 };
 
