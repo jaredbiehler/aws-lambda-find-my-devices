@@ -1,4 +1,4 @@
-# Find My Devices
+# Alexa Find My [iOS Device]
 This project allows the use of the native iCloud "find my Apple device" functionality directly from Alexa. As an added bonus, creating custom skills in the Alexa dashboard allows the utterance "find my phone" and "find my watch" to be asked directly of Alexa, rather than a more unnatural "ask [app] to find my device".  
 
 As Apple does not provide any kind of OAuth access to their iCloud API, these skills must remain in development for perpetuity as they will need to contain an iCloud username and password.  
