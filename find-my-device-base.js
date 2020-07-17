@@ -115,7 +115,9 @@ async function playSound(message) {
 
 const LaunchRequestHandler = {
     canHandle(handlerInput) {
-        return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
+        return handlerInput.requestEnvelope.request.type === 'LaunchRequest' ||
+            (handlerInput.requestEnvelope.request.type === 'IntentRequest' &&
+                handlerInput.requestEnvelope.request.intent.name === 'FindDeviceIntent');
     },
     async handle(handlerInput) {
         let speechText = `I have played a sound on your ${modelDisplayName}.`;
@@ -130,6 +132,36 @@ const LaunchRequestHandler = {
             .speak(speechText)
             .withSimpleCard(`Find ${modelDisplayName} Triggered`, speechText)
             .withShouldEndSession(true)
+            .getResponse();
+    }
+};
+
+const CancelAndStopIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && (handlerInput.requestEnvelope.request.intent.name === 'AMAZON.CancelIntent'
+                || handlerInput.requestEnvelope.request.intent.name === 'AMAZON.StopIntent');
+    },
+    handle(handlerInput) {
+        const speakOutput = "Goodbye!";
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .getResponse();
+    }
+};
+
+const HelpIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && handlerInput.requestEnvelope.request.intent.name === 'AMAZON.HelpIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = "Help is not currently available for find my device.";
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
             .getResponse();
     }
 };
@@ -151,6 +183,10 @@ const ErrorHandler = {
 };
 
 exports.handler = Alexa.SkillBuilders.custom()
-    .addRequestHandlers(LaunchRequestHandler)
+    .addRequestHandlers(
+        LaunchRequestHandler,
+        HelpIntentHandler,
+        CancelAndStopIntentHandler
+    )
     .addErrorHandlers(ErrorHandler)
     .lambda();

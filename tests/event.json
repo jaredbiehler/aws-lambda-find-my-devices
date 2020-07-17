@@ -46,10 +46,14 @@
     }
   },
   "request": {
-    "type": "LaunchRequest",
+    "type": "IntentRequest",
     "requestId": "amzn1.echo-api.request.test",
     "timestamp": "2018-12-10T23:14:59Z",
     "locale": "en-US",
-    "shouldLinkResultBeReturned": false
+    "shouldLinkResultBeReturned": false,
+    "intent": {
+      "name": "FindDeviceIntent",
+      "confirmationStatus": "NONE"
+    }
   }
 }
