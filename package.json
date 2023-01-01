@@ -6,7 +6,7 @@
   "dependencies": {
     "ask-sdk-core": "^2.3.0",
     "ask-sdk-model": "^1.9.0",
-    "config": "^3.0.0",
+    "config": "^3.3.8",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5"
   },
